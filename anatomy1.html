@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>치위생과 해부학 용어 플래시카드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .flashcard-container {
+            perspective: 1000px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2.5rem;
+            border-radius: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .flashcard-front {
+            background: linear-gradient(135deg, #f0f9ff 0%, #dbe7f2 100%);
+            color: #1e40af;
+            z-index: 2;
+        }
+
+        .flashcard-back {
+            background: linear-gradient(135deg, #fdf6f3 0%, #f4e3df 100%);
+            color: #8c4228;
+            transform: rotateY(180deg);
+            z-index: 1;
+        }
+        
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #6b7280;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .card-text {
+            font-size: 1.75rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .answer-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .rationale-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #4b5563;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .flip-button {
+            padding: 1rem 2.5rem;
+            border-radius: 9999px;
+            background-color: #5b21b6;
+            color: white;
+            font-weight: 700;
+            font-size: 1.125rem;
+            box-shadow: 0 10px 15px -3px rgba(88, 28, 135, 0.3), 0 4px 6px -2px rgba(88, 28, 135, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .flip-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 20px -3px rgba(88, 28, 135, 0.4), 0 6px 8px -2px rgba(88, 28, 135, 0.2);
+        }
+        
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+<div class="bg-white rounded-3xl shadow-xl max-w-2xl w-full p-8 space-y-8 flex flex-col items-center">
+    <div class="text-center space-y-2">
+        <h1 class="text-4xl font-bold text-gray-800">해부학 용어 플래시카드</h1>
+        <p class="text-gray-500 text-xl">골의 표면구조 용어를 학습해 보세요</p>
+    </div>
+
+    <div id="quiz-container" class="space-y-6 w-full">
+        <div class="flex justify-between items-center text-gray-600 font-medium">
+            <span id="question-count" class="text-lg">1/10</span>
+        </div>
+
+        <div class="flashcard-container">
+            <div id="flashcard" class="flashcard">
+                <div class="flashcard-face flashcard-front">
+                    <p class="card-header">용어</p>
+                    <p id="term-text" class="card-text"></p>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    <p class="card-header">설명</p>
+                    <p id="definition-text" class="answer-text"></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex justify-center mt-6">
+            <button id="flip-btn" class="flip-button">앞/뒤 뒤집기</button>
+        </div>
+        
+        <div id="navigation-buttons" class="flex justify-between gap-4 mt-6">
+            <button id="previous-btn" class="flex-1 py-3 px-6 rounded-full bg-gray-200 text-gray-700 font-bold hover:bg-gray-300 transition-colors">이전</button>
+            <button id="next-btn" class="flex-1 py-3 px-6 rounded-full bg-blue-500 text-white font-bold hover:bg-blue-600 transition-colors shadow-lg">다음</button>
+        </div>
+        
+        <div id="reset-button-container" class="flex justify-center mt-4 hidden">
+            <button id="reset-btn" class="py-3 px-8 rounded-full bg-green-500 text-white font-bold hover:bg-green-600 transition-colors shadow-lg">처음부터 다시</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 질문 데이터를 용어-설명 형식으로 변경
+    const quizData = [
+        { "term": "돌기 (process)", "definition": "골표면에서 뚜렷하게 돌출된 부위" },
+        { "term": "융기 (eminence)", "definition": "골표면에 있는 둥근 형태로 완만하게 높아진 부분" },
+        { "term": "두 (head)", "definition": "둥근 형태의 표면으로 관절면을 가지고 있는 돌기" },
+        { "term": "경 (neck)", "definition": "두에서 이어지는 좁은 부분" },
+        { "term": "결절 (tubercle)", "definition": "작고 둥근 형태의 튀어나온 부위" },
+        { "term": "조면 (tuberosity)", "definition": "크고 거친 면을 가진 부분" },
+        { "term": "각 (horn)", "definition": "소뿔 형태의 작은 융기" },
+        { "term": "소설 (lingula)", "definition": "혀 모양처럼 튀어나온 부위" },
+        { "term": "능 (crest)", "definition": "능선처럼 길게 융기된 부분" },
+        { "term": "선 (line)", "definition": "직선형, 선 모양으로 튀어나온 부위" },
+        { "term": "와 (fossa)", "definition": "얕고 오목한 부위" },
+        { "term": "구 (groove)", "definition": "가늘고 긴 고랑" },
+        { "term": "공 (foramen)", "definition": "구멍이 뚫린 부위" },
+        { "term": "열 (fissure)", "definition": "갈라진 형태의 좁은 틈" },
+        { "term": "강 (cavity)", "definition": "여러 종류의 골로 둘러싸여 형성된 공간" }
+    ];
+
+    let currentCardIndex = 0;
+    const flashcard = document.getElementById('flashcard');
+    const termText = document.getElementById('term-text');
+    const definitionText = document.getElementById('definition-text');
+    const flipBtn = document.getElementById('flip-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const previousBtn = document.getElementById('previous-btn');
+    const questionCount = document.getElementById('question-count');
+    const resetBtn = document.getElementById('reset-btn');
+    const resetButtonContainer = document.getElementById('reset-button-container');
+
+    function showCard(index) {
+        if (flashcard.classList.contains('flipped')) {
+            flashcard.classList.remove('flipped');
+        }
+        const currentCard = quizData[index];
+        termText.textContent = currentCard.term;
+        definitionText.textContent = currentCard.definition;
+        questionCount.textContent = `${index + 1}/${quizData.length}`;
+        updateNavigationButtons();
+    }
+
+    function updateNavigationButtons() {
+        previousBtn.disabled = currentCardIndex === 0;
+        previousBtn.classList.toggle('opacity-50', currentCardIndex === 0);
+        
+        nextBtn.textContent = (currentCardIndex === quizData.length - 1) ? '마지막 카드' : '다음 카드';
+        resetButtonContainer.classList.add('hidden');
+    }
+
+    flipBtn.addEventListener('click', () => {
+        flashcard.classList.toggle('flipped');
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (currentCardIndex < quizData.length - 1) {
+            currentCardIndex++;
+            showCard(currentCardIndex);
+        } else {
+            showFinalMessage();
+        }
+    });
+
+    previousBtn.addEventListener('click', () => {
+        if (currentCardIndex > 0) {
+            currentCardIndex--;
+            showCard(currentCardIndex);
+        }
+    });
+    
+    function showFinalMessage() {
+        if (flashcard.classList.contains('flipped')) {
+            flashcard.classList.remove('flipped');
+        }
+        termText.innerHTML = `모든 카드를 학습했습니다.<br>수고하셨습니다!`;
+        definitionText.textContent = '';
+        flipBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        previousBtn.style.display = 'none';
+        resetButtonContainer.classList.remove('hidden');
+    }
+
+    resetBtn.addEventListener('click', () => {
+        currentCardIndex = 0;
+        flipBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+        previousBtn.style.display = 'block';
+        showCard(currentCardIndex);
+    });
+
+    // Initial load
+    window.onload = () => {
+        showCard(currentCardIndex);
+    };
+</script>
+
+</body>
+</html>
